@@ -10,10 +10,40 @@
 #include <Windows.h>
 #include <Wincrypt.h>
 #pragma comment(lib, "ws2_32.lib")
+#pragma comment(lib, "Crypt32.lib")
 
 // 存储所有客户端套接字
 std::vector<SOCKET> client_sockets;
 std::mutex client_sockets_mutex; // 互斥量
+
+// 生成消息摘要（使用MD5哈希算法）
+std::string calculateMD5(const std::string& message) {
+    HCRYPTPROV hCryptProv;
+    if (CryptAcquireContext(&hCryptProv, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT)) {
+        HCRYPTHASH hHash;
+        if (CryptCreateHash(hCryptProv, CALG_MD5, 0, 0, &hHash)) {
+            if (CryptHashData(hHash, (BYTE*)message.c_str(), message.size(), 0)) {
+                DWORD digestSize = 16; // MD5摘要大小为16字节
+                BYTE digest[16];
+                if (CryptGetHashParam(hHash, HP_HASHVAL, digest, &digestSize, 0)) {
+                    std::string result;
+                    for (int i = 0; i < digestSize; i++) {
+                        char buf[3];
+                        sprintf_s(buf, "%02x", digest[i]);
+                        result += buf;
+                    }
+                    CryptDestroyHash(hHash);
+                    CryptReleaseContext(hCryptProv, 0);
+                    return result;
+                }
+            }
+            CryptDestroyHash(hHash);
+        }
+        CryptReleaseContext(hCryptProv, 0);
+    }
+    return "";
+}
+
 
 // 广播消息给所有客户端，除了发送者
 void broadcast_message(const std::string& message, SOCKET sender_socket) {
@@ -46,29 +76,41 @@ void handle_client(SOCKET client_socket) {
             buffer[bytes_received] = '\0';
             std::string receivedMessage(buffer);
 
-            if (receivedMessage.length() >= 2) {
+            if (receivedMessage.length() >= 33) {
                 // 提取任务代码
                 std::string taskCodeStr = receivedMessage.substr(0, 1);
                 int taskCode = std::stoi(taskCodeStr);
                 // 提取消息内容（去除哈希值）
-                std::string messageContent = receivedMessage.substr(1);
+                std::string messageContent = receivedMessage.substr(1, receivedMessage.length() - 33);
+                // 提取接收到的哈希值
+                std::string receivedHash = receivedMessage.substr(receivedMessage.length() - 32);
 
-                // 处理任务代码
-                if (taskCode == 1) {
-                    // 执行有效操作
-                    std::string response = "Valid operation result: " + messageContent;
-                    send(client_socket, response.c_str(), response.size(), 0);
-                }
-                else if (taskCode == 2) {
-                    // 这是一条广播消息
-                    std::string response = messageContent;
-                    send(client_socket, response.c_str(), response.size(), 0);
-                    // 广播消息给所有客户端，除了发送者
-                    broadcast_message(messageContent, client_socket);
+                // 计算消息的实际哈希值
+                std::string calculatedHash = calculateMD5(messageContent);
+
+                if (calculatedHash == receivedHash) {
+                    // 实际哈希值与接收到的哈希值匹配
+                    if (taskCode == 1) {
+                        // 执行有效操作
+                        std::string response = "Valid operation result: " + messageContent;
+                        send(client_socket, response.c_str(), response.size(), 0);
+                    }
+                    else if (taskCode == 2) {
+                        // 这是一条广播消息
+                        std::string response = messageContent;
+                        send(client_socket, response.c_str(), response.size(), 0);
+                        // 广播消息给所有客户端，除了发送者
+                        broadcast_message(messageContent, client_socket);
+                    }
+                    else {
+                        // 处理无效任务代码
+                        std::string response = "Unknown task code: " + messageContent;
+                        send(client_socket, response.c_str(), response.size(), 0);
+                    }
                 }
                 else {
-                    // 处理无效任务代码
-                    std::string response = "Unknown task code: " + messageContent;
+                    // 实际哈希值与接收到的哈希值不匹配
+                    std::string response = "Hash verification failed for message: " + messageContent;
                     send(client_socket, response.c_str(), response.size(), 0);
                 }
             }
@@ -80,6 +122,7 @@ void handle_client(SOCKET client_socket) {
         }
     }
 }
+
 
 void accept_clients(SOCKET server_socket) {
     while (true) {

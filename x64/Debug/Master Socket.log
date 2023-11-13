@@ -1,8 +1,11 @@
 ﻿C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets(534,5): warning MSB8028: 中间目录(x64\Debug\)包含从另一个项目(Master Socket.vcxproj)共享的文件。   这会导致错误的清除和重新生成行为。
   sever.cpp
-D:\c++\Master Socket\sever.cpp(25,79): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
-D:\c++\Master Socket\sever.cpp(60,77): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
-D:\c++\Master Socket\sever.cpp(65,77): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
-D:\c++\Master Socket\sever.cpp(72,77): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
-D:\c++\Master Socket\sever.cpp(78,73): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
+D:\c++\Master Socket\sever.cpp(25,16): warning C4267: “参数”: 从“size_t”转换到“DWORD”，可能丢失数据
+D:\c++\Master Socket\sever.cpp(30,39): warning C4018: “<”: 有符号/无符号不匹配
+D:\c++\Master Socket\sever.cpp(55,79): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
+D:\c++\Master Socket\sever.cpp(96,81): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
+D:\c++\Master Socket\sever.cpp(101,81): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
+D:\c++\Master Socket\sever.cpp(108,81): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
+D:\c++\Master Socket\sever.cpp(114,77): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
+D:\c++\Master Socket\sever.cpp(120,73): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
   Master Socket.vcxproj -> D:\c++\Project1\x64\Debug\Sever Socket.exe
